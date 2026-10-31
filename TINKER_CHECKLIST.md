@@ -114,3 +114,8 @@ exist. A regression test verifies that introduction-only facts remain searchable
 - Passing mocked prompt/integration tests does not validate live model quality.
   The assignment's real generated comparisons and verbal learner explanations
   remain distinct from the completed code and offline validation.
+
+The first hosted run exposed a CI checkout issue: depth 1 makes Git treat the
+checked-out commit as a root, so `git show --check` flags existing Markdown hard
+line breaks throughout the starter. CI now fetches depth 2 to compare with the
+parent, uses Node 24 action versions, and pins Ubuntu 24.04.
