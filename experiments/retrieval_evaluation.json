@@ -1,0 +1,98 @@
+{
+  "starter_hit_rate": 0.875,
+  "note": "Starter counts no-expected-source query as miss even when refused; filename hits are not answer correctness.",
+  "supported_hits": 7,
+  "supported_queries": 7,
+  "results": [
+    {
+      "query": "Where is the auth token generated?",
+      "expected": [
+        "AUTH.md"
+      ],
+      "retrieved": [
+        "AUTH.md",
+        "AUTH.md"
+      ],
+      "hit": true
+    },
+    {
+      "query": "What environment variables are required for authentication?",
+      "expected": [
+        "AUTH.md"
+      ],
+      "retrieved": [
+        "AUTH.md",
+        "SETUP.md",
+        "AUTH.md"
+      ],
+      "hit": true
+    },
+    {
+      "query": "How do I connect to the database?",
+      "expected": [
+        "DATABASE.md"
+      ],
+      "retrieved": [
+        "DATABASE.md",
+        "DATABASE.md",
+        "DATABASE.md"
+      ],
+      "hit": true
+    },
+    {
+      "query": "Which endpoint lists all users?",
+      "expected": [
+        "API_REFERENCE.md"
+      ],
+      "retrieved": [
+        "API_REFERENCE.md",
+        "API_REFERENCE.md",
+        "API_REFERENCE.md"
+      ],
+      "hit": true
+    },
+    {
+      "query": "What does the /api/projects/<project_id> route return?",
+      "expected": [
+        "API_REFERENCE.md"
+      ],
+      "retrieved": [
+        "API_REFERENCE.md",
+        "API_REFERENCE.md",
+        "DATABASE.md"
+      ],
+      "hit": true
+    },
+    {
+      "query": "Is there any mention of payment processing in these docs?",
+      "expected": [],
+      "retrieved": [],
+      "hit": false
+    },
+    {
+      "query": "How does a client refresh an access token?",
+      "expected": [
+        "AUTH.md"
+      ],
+      "retrieved": [
+        "AUTH.md",
+        "AUTH.md",
+        "API_REFERENCE.md"
+      ],
+      "hit": true
+    },
+    {
+      "query": "Which fields are stored in the users table?",
+      "expected": [
+        "API_REFERENCE.md",
+        "DATABASE.md"
+      ],
+      "retrieved": [
+        "DATABASE.md",
+        "DATABASE.md",
+        "DATABASE.md"
+      ],
+      "hit": true
+    }
+  ]
+}

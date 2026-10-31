@@ -1,0 +1,117 @@
+{
+  "live_gemini": false,
+  "results": [
+    {
+      "query": "Where is the auth token generated?",
+      "retrieval": "[AUTH.md]\n# Authentication Guide\n## Token Generation\n\nTokens are created by the `generate_access_token` function in the `auth_utils.py` module. The function takes a user ID and returns a signed JSON Web Token string.\n\nInternally, the token is signed using the secret stored in the `AUTH_SECRET_KEY` environment variable. If the key is missing or empty, token creation will fail.\n\nThe token payload includes:\n\n- `user_id`\n- `issued_at`\n- `expires_at`\n- `permissions` (optional)\n\n---\n[AUTH.md]\n# Authentication Guide\n## Environment Variables\n\nThe authentication system depends on two variables:\n\n- `AUTH_SECRET_KEY`  \n  A secret string used to sign all access tokens. Must be long and unpredictable.\n\n- `TOKEN_LIFETIME_SECONDS`  \n  Controls how long a generated token remains valid. Defaults to 3600 seconds if not set.\n\nBoth variables must be configured before starting the server.\n",
+      "sources": [
+        "AUTH.md",
+        "AUTH.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "What environment variables are required for authentication?",
+      "retrieval": "[AUTH.md]\n# Authentication Guide\n## Environment Variables\n\nThe authentication system depends on two variables:\n\n- `AUTH_SECRET_KEY`  \n  A secret string used to sign all access tokens. Must be long and unpredictable.\n\n- `TOKEN_LIFETIME_SECONDS`  \n  Controls how long a generated token remains valid. Defaults to 3600 seconds if not set.\n\nBoth variables must be configured before starting the server.\n\n---\n[SETUP.md]\n# Setup Guide\n## 2. Environment Variables\n### Required Variables\n\n- `DATABASE_URL`  \n  Specifies where the application stores data. If omitted, the app uses a local SQLite database file.\n\n  Example:\n\n      ```plaintext\n      DATABASE_URL=sqlite:///app.db\n      ```\n\n- `AUTH_SECRET_KEY`  \nUsed to sign authentication tokens. Must be a non empty string.\n\n    Example:\n\n        ```plaintext\n        AUTH_SECRET_KEY=\"supersecretvalue\"\n        ```\n\n---\n[AUTH.md]\n# Authentication Guide\n## Token Generation\n\nTokens are created by the `generate_access_token` function in the `auth_utils.py` module. The function takes a user ID and returns a signed JSON Web Token string.\n\nInternally, the token is signed using the secret stored in the `AUTH_SECRET_KEY` environment variable. If the key is missing or empty, token creation will fail.\n\nThe token payload includes:\n\n- `user_id`\n- `issued_at`\n- `expires_at`\n- `permissions` (optional)\n",
+      "sources": [
+        "AUTH.md",
+        "SETUP.md",
+        "AUTH.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "How do I connect to the database?",
+      "retrieval": "[DATABASE.md]\n# Database Guide\n## Connection Configuration\n\nThe database connection is determined by the `DATABASE_URL` environment variable.\n\nExamples:\n\n- SQLite (default):\n\n    ```plaintext\n    sqlite:///app.db\n    ```\n\n- PostgreSQL:\n\n    ```plaintext\n    postgres://user:password@localhost:5432/appdb\n    ```\n\nIf `DATABASE_URL` is not provided, the application creates a local SQLite database file named `app.db`.\n\n---\n[DATABASE.md]\n# Database Guide\n## Overview\n\nThe application uses a lightweight SQLite database for local development. In production environments, it can be configured to use PostgreSQL by providing the correct connection string.\n\nAll database interactions are handled through the `db.py` module, which provides helper functions for connecting, executing queries, and mapping results into Python objects.\n\n---\n[DATABASE.md]\n# Database Guide\n## Tables\n",
+      "sources": [
+        "DATABASE.md",
+        "DATABASE.md",
+        "DATABASE.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "Which endpoint lists all users?",
+      "retrieval": "[API_REFERENCE.md]\n# API Reference\n## User Data Endpoints\n### GET /api/users\n\nReturns a list of all users. Only accessible to admins.\n\nHeaders:\n\n    ```plaintext\n    Authorization: Bearer <token>\n    ```\n\nSuccessful Response:\n\n    ```json\n    [\n    {\n        \"user_id\": 1,\n        \"email\": \"admin@example.com\"\n    },\n    {\n        \"user_id\": 2,\n        \"email\": \"guest@example.com\"\n    }\n    ]\n    ```\n\nNotes:\n\n* Returns 403 for non admin accounts.\n\n---\n[API_REFERENCE.md]\n# API Reference\n## User Data Endpoints\n\n---\n[API_REFERENCE.md]\n# API Reference\n## User Data Endpoints\n### GET /api/users/<user_id>\n\nFetches profile data for a specific user.\n\nHeaders:\n\n    ```plaintext\n    Authorization: Bearer <token>\n    ```\n\nResponse Example:\n\n    ```json\n    {\n    \"user_id\": 42,\n    \"email\": \"user@example.com\",\n    \"joined_at\": \"2024-01-15T10:22:00Z\"\n    }\n    ```\n\nFailure Cases:\n\n* 401 if the token is missing or expired\n* 403 if the user lacks permission to view this profile\n* 404 if no user exists with the given ID\n",
+      "sources": [
+        "API_REFERENCE.md",
+        "API_REFERENCE.md",
+        "API_REFERENCE.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "What does the /api/projects/<project_id> route return?",
+      "retrieval": "[API_REFERENCE.md]\n# API Reference\n## Project Data Endpoints\n### GET /api/projects\n\nReturns all projects visible to the calling user.\n\nHeaders:\n\n    ```plaintext\n    Authorization: Bearer <token>\n    ```\n\nResponse Example:\n\n    ```json\n    [\n    {\n        \"project_id\": \"alpha\",\n        \"name\": \"Alpha Project\",\n        \"status\": \"active\"\n    }\n    ]\n    ```\n\n---\n[API_REFERENCE.md]\n# API Reference\n## Project Data Endpoints\n### GET /api/projects/<project_id>\n\nFetches detailed information for a single project.\n\nHeaders:\n\n    ```plaintext\n    Authorization: Bearer <token>\n    ```\n\nResponse Example:\n\n    ```json\n    {\n    \"project_id\": \"alpha\",\n    \"name\": \"Alpha Project\",\n    \"description\": \"Internal research initiative.\",\n    \"status\": \"active\",\n    \"owner\": 1\n    }\n    ```\n\nFailure Cases:\n\n* 401 for missing token\n* 403 if caller cannot access the project\n* 404 if the project does not exist\n\n---\n[DATABASE.md]\n# Database Guide\n## Query Helpers\n\nThe `db.py` module exposes several helpful functions:\n\n- `get_user_by_id(user_id)`  \nReturns a dictionary with user details or None if not found.\n\n- `get_all_users()`  \nReturns a list of all user records.\n\n- `get_projects_for_user(user_id)`  \nReturns all projects where the user has at least viewer access.\n\n- `get_project_details(project_id)`  \nReturns a single project record, including its metadata.\n\nThese functions are thin wrappers over SQL queries and intentionally simple to make debugging easier.\n",
+      "sources": [
+        "API_REFERENCE.md",
+        "API_REFERENCE.md",
+        "DATABASE.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "Is there any mention of payment processing in these docs?",
+      "retrieval": "I do not know based on these docs.",
+      "sources": [],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "I do not know based on these docs."
+    },
+    {
+      "query": "How does a client refresh an access token?",
+      "retrieval": "[AUTH.md]\n# Authentication Guide\n## Client Workflow\n\nA typical client follows this sequence:\n\n1. Send credentials to `/api/login`\n2. Receive an access token in the response\n3. Include the token in the Authorization header for all subsequent requests:\n\n    ```plaintext\n    Authorization: Bearer <token>\n    ```\n\n4. Refresh the token when it expires by calling `/api/refresh`\n\nClients should never store tokens in URL query parameters.\n\n---\n[AUTH.md]\n# Authentication Guide\n## Validating Requests\n\nRequests are validated by the `require_auth` decorator. This decorator ensures that:\n\n1. A token is present in the Authorization header  \n2. The token signature is valid  \n3. The token has not expired  \n4. The user has permission to access the requested resource  \n\nIf validation fails, the client receives a 401 Unauthorized response.\n\n---\n[API_REFERENCE.md]\n# API Reference\n## Authentication Endpoints\n### POST /api/refresh\n\nExchanges an existing valid token for a new one with an updated expiration time.\n\nHeaders:\n\n    ```plaintext\n    Authorization: Bearer <token>\n    ```\n\nResponse:\n\n    ```json\n    {\n    \"access_token\": \"<new_token>\"\n    }\n    ```\n",
+      "sources": [
+        "AUTH.md",
+        "AUTH.md",
+        "API_REFERENCE.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "Which fields are stored in the users table?",
+      "retrieval": "[DATABASE.md]\n# Database Guide\n## Tables\n### users\n\nStores basic account information.\n\n| Column       | Type      | Description                         |\n|--------------|-----------|-------------------------------------|\n| user_id      | INTEGER   | Primary key                         |\n| email        | TEXT      | Unique email address                |\n| password_hash| TEXT      | Hashed password                     |\n| joined_at    | TEXT      | ISO 8601 timestamp                  |\n\n---\n[DATABASE.md]\n# Database Guide\n## Tables\n### projects\n\nRepresents projects owned or shared with users.\n\n| Column       | Type      | Description                         |\n|--------------|-----------|-------------------------------------|\n| project_id   | TEXT      | Primary key (string identifier)     |\n| name         | TEXT      | Human readable name                 |\n| description  | TEXT      | Optional longer description         |\n| status       | TEXT      | active, archived, or pending        |\n| owner_id     | INTEGER   | Foreign key referencing users       |\n\n---\n[DATABASE.md]\n# Database Guide\n## Tables\n### permissions\n\nMaps users to projects and defines what actions they can take.\n\n| Column     | Type    | Description                             |\n|------------|---------|-----------------------------------------|\n| user_id    | INTEGER | Foreign key                             |\n| project_id | TEXT    | Foreign key                             |\n| role       | TEXT    | admin, editor, or viewer                |\n\nA user listed as admin automatically has full access to the project.\n",
+      "sources": [
+        "DATABASE.md",
+        "DATABASE.md",
+        "DATABASE.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "How do I rotate the database encryption key?",
+      "retrieval": "[DATABASE.md]\n# Database Guide\n## Tables\n### users\n\nStores basic account information.\n\n| Column       | Type      | Description                         |\n|--------------|-----------|-------------------------------------|\n| user_id      | INTEGER   | Primary key                         |\n| email        | TEXT      | Unique email address                |\n| password_hash| TEXT      | Hashed password                     |\n| joined_at    | TEXT      | ISO 8601 timestamp                  |\n\n---\n[DATABASE.md]\n# Database Guide\n## Tables\n### projects\n\nRepresents projects owned or shared with users.\n\n| Column       | Type      | Description                         |\n|--------------|-----------|-------------------------------------|\n| project_id   | TEXT      | Primary key (string identifier)     |\n| name         | TEXT      | Human readable name                 |\n| description  | TEXT      | Optional longer description         |\n| status       | TEXT      | active, archived, or pending        |\n| owner_id     | INTEGER   | Foreign key referencing users       |\n\n---\n[DATABASE.md]\n# Database Guide\n## Tables\n### permissions\n\nMaps users to projects and defines what actions they can take.\n\n| Column     | Type    | Description                             |\n|------------|---------|-----------------------------------------|\n| user_id    | INTEGER | Foreign key                             |\n| project_id | TEXT    | Foreign key                             |\n| role       | TEXT    | admin, editor, or viewer                |\n\nA user listed as admin automatically has full access to the project.\n",
+      "sources": [
+        "DATABASE.md",
+        "DATABASE.md",
+        "DATABASE.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "How do I sign in?",
+      "retrieval": "[AUTH.md]\n# Authentication Guide\n## Token Generation\n\nTokens are created by the `generate_access_token` function in the `auth_utils.py` module. The function takes a user ID and returns a signed JSON Web Token string.\n\nInternally, the token is signed using the secret stored in the `AUTH_SECRET_KEY` environment variable. If the key is missing or empty, token creation will fail.\n\nThe token payload includes:\n\n- `user_id`\n- `issued_at`\n- `expires_at`\n- `permissions` (optional)\n\n---\n[AUTH.md]\n# Authentication Guide\n## Environment Variables\n\nThe authentication system depends on two variables:\n\n- `AUTH_SECRET_KEY`  \n  A secret string used to sign all access tokens. Must be long and unpredictable.\n\n- `TOKEN_LIFETIME_SECONDS`  \n  Controls how long a generated token remains valid. Defaults to 3600 seconds if not set.\n\nBoth variables must be configured before starting the server.\n\n---\n[AUTH.md]\n# Authentication Guide\n## Common Failure Cases\n\n- Token signed with a stale or rotated key  \n- Clock skew causing premature expiration  \n- Missing Authorization header  \n- Incorrect token format (extra whitespace or missing Bearer prefix)\n\nIf unexpected authentication failures occur, rotate the secret key and instruct users to log in again.\n",
+      "sources": [
+        "AUTH.md",
+        "AUTH.md",
+        "AUTH.md"
+      ],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "NOT RUN: Gemini API key required."
+    },
+    {
+      "query": "What is the capital of France?",
+      "retrieval": "I do not know based on these docs.",
+      "sources": [],
+      "naive": "NOT RUN: Gemini API key required.",
+      "rag": "I do not know based on these docs."
+    }
+  ]
+}

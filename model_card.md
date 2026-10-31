@@ -1,147 +1,150 @@
 # DocuBot Model Card
 
-This model card is a short reflection on your DocuBot system. Fill it out after you have implemented retrieval and experimented with all three modes:
-
-1. Naive LLM over full docs  
-2. Retrieval only  
-3. RAG (retrieval plus LLM)
-
-Use clear, honest descriptions. It is fine if your system is imperfect.
-
----
-
 ## 1. System Overview
 
-**What is DocuBot trying to do?**  
-Describe the overall goal in 2 to 3 sentences.
+DocuBot answers developer questions about the sample documentation in `docs/`.
+It compares a no-context Gemini baseline, lexical retrieval, and retrieval plus
+Gemini. It does not train a new model or implement the backend described in the
+documents.
 
-> _Your answer here._
-
-**What inputs does DocuBot take?**  
-For example: user question, docs in folder, environment variables.
-
-> _Your answer here._
-
-**What outputs does DocuBot produce?**
-
-> _Your answer here._
-
----
+Inputs: a user question; local `.md`/`.txt` documentation; optional
+`GEMINI_API_KEY` for modes 1 and 3. Outputs: source-labelled snippets, a generated
+answer, or an explicit refusal. API errors are operational failures, not answers.
 
 ## 2. Retrieval Design
 
-**How does your retrieval system work?**  
-Describe your choices for indexing and scoring.
+- Read files in sorted order for repeatable ties.
+- Normalize case/punctuation, discard common question words, and strip a small
+  set of inflection suffixes. Preserve underscore identifiers.
+- Build an inverted index from normalized words to filenames.
+- Split Markdown at headings, retaining parent headings with each section. This
+  keeps endpoint restrictions, examples, and table rows with their context.
+  Skip broad root introductions when detailed subsections exist. Plain text
+  uses blank-line chunks.
+- Score each section by the fraction of distinct meaningful query terms matched.
+  Require at least 0.4 coverage, then rank with a small heading-match bonus
+  (`coverage + 0.25 * heading_coverage`). Return at most three sections.
 
-- How do you turn documents into an index?
-- How do you score relevance for a query?
-- How do you choose top snippets?
-
-> _Your answer here._
-
-**What tradeoffs did you make?**  
-For example: speed vs precision, simplicity vs accuracy.
-
-> _Your answer here._
-
----
+The threshold is a transparent teaching heuristic, not a calibrated confidence
+probability. A section can match words without containing an answer. Heading
+context improves retrieval but can also contribute irrelevant matches. This is
+small-scale keyword search, not semantic search. Section sizes are not bounded;
+very large sections would need further splitting.
 
 ## 3. Use of the LLM (Gemini)
 
-**When does DocuBot call the LLM and when does it not?**  
-Briefly describe how each mode behaves.
+- **Naive:** send only the question. The inherited method name
+  `naive_answer_over_full_docs` is retained for compatibility, but its corpus
+  argument is deliberately ignored, matching the Tinker specification. The
+  starter README and CLI labels incorrectly described this as full-document mode;
+  those descriptions were corrected.
+- **Retrieval only:** no model call; show source filenames and section text.
+- **RAG:** retrieve first; refuse immediately if there are no qualifying snippets.
+  Otherwise send the question and snippets to Gemini.
 
-- Naive LLM mode:
-- Retrieval only mode:
-- RAG mode:
-
-> _Your answer here._
-
-**What instructions do you give the LLM to keep it grounded?**  
-Summarize the rules from your prompt. For example: only use snippets, say "I do not know" when needed, cite files.
-
-> _Your answer here._
-
----
+The RAG prompt requires answers supported by snippets, filename citations, and an
+explicit refusal when evidence is insufficient. It asks the model to flag
+conflicting documentation and treat embedded instructions as data. These are
+prompt instructions, not guarantees or a complete prompt-injection defense.
 
 ## 4. Experiments and Comparisons
 
-Run the **same set of queries** in all three modes. Fill in the table with short notes.
+**Execution status:** retrieval and pre-generation refusals were actually run.
+Live Gemini was not run because no API key was configured. Tests use a simulated
+transport solely to verify prompt construction and calls; simulated outputs are
+not model observations. Therefore Parts 1 and 4 still need their live-generation
+observations before the entire Tinker can be called complete.
 
-You can reuse or adapt the queries from `dataset.py`.
+Actual outputs for 11 questions are saved in
+`experiments/offline_comparison.json`. Identical query strings are used for all
+three modes. Missing results are explicitly marked `NOT RUN`.
 
-| Query | Naive LLM: helpful or harmful? | Retrieval only: helpful or harmful? | RAG: helpful or harmful? | Notes |
-|------|---------------------------------|--------------------------------------|---------------------------|-------|
-| Example: Where is the auth token generated? | | | | |
-| Example: How do I connect to the database? | | | | |
-| Example: Which endpoint lists all users? | | | | |
-| Example: How does a client refresh an access token? | | | | |
+| Query | Naive | Retrieval: observed | RAG: observed |
+|---|---|---|---|
+| Where is the auth token generated? | Not run | Top section gives `generate_access_token` in `auth_utils.py` and signing configuration. | Not run |
+| How do I connect to the database? | Not run | Top three include `DATABASE_URL` and connection examples. The overview may rank first. | Not run |
+| Which endpoint lists all users? | Not run | Top section gives `GET /api/users`, including the admin-only restriction. | Not run |
+| How does a client refresh an access token? | Not run | Client workflow and API refresh section appear, but docs conflict about expired-token handling. | Not run |
+| Which fields are stored in the users table? | Not run | First section includes the user table and `password_hash`. | Not run |
+| Is there any mention of payment processing in these docs? | Not run | Refuses: no qualifying context. | Actual pre-generation refusal; no Gemini call. |
+| What is the capital of France? | Not run | Refuses: no qualifying context. | Actual pre-generation refusal; no Gemini call. |
 
-**What patterns did you notice?**  
+The unmodified starter evaluation reports **7/8 = 0.875** source hits. All seven
+questions with expected sources hit at top 3. The eighth, payment processing,
+has no expected source and is always counted as a miss even when correctly
+refused. This is a filename metric, not answer correctness. Its substring labels
+also make the users-table question accept either API_REFERENCE.md or DATABASE.md.
+Our tests additionally require concrete answer evidence from the correct source.
+The tiny development set is not an independent generalization benchmark.
 
-- When does naive LLM look impressive but untrustworthy?  
-- When is retrieval only clearly better?  
-- When is RAG clearly better than both?
+Expected patterns to check live, **not observed results**: naive output may sound
+plausible without evidence; retrieval can be verifiable but verbose; RAG may
+summarize retrieved evidence clearly but can still misuse it or fail to refuse.
 
-> _Your answer here._
+Run the pending comparison with a locally configured key:
 
----
+```bash
+python compare_modes.py --live --output experiments/live_comparison.json
+```
+
+Then inspect the saved answers, replace the pending table cells, and record one
+specific ungrounded naive answer, one clearer RAG answer, and one actual RAG
+failure. The script saves outputs, not correctness judgments. Do not substitute
+predictions for observations.
 
 ## 5. Failure Cases and Guardrails
 
-**Describe at least two concrete failure cases you observed.**  
-For each one, say:
+1. **Observed irrelevant retrieval:** “How do I rotate the database encryption
+   key?” retrieves authentication key-rotation advice even though the docs do not
+   describe database encryption-key rotation. Shared words clear the threshold.
+   The correct generated behavior is to refuse unsupported instructions. Live
+   RAG's handling has not been observed.
+2. **Observed weak semantic match:** “How do I sign in?” retrieves token-generation
+   material instead of reliably prioritizing the login endpoint. Keyword matching
+   conflates signing a token with signing in. Semantic retrieval or reranking
+   could improve this, but still needs evaluation.
+3. **Observed conflicting source text:** AUTH.md says to refresh when a token
+   expires, while API_REFERENCE.md says `/api/refresh` exchanges an existing valid
+   token. Retrieving both does not resolve the contradiction. The model should
+   flag it, and maintainers should clarify the docs. No live RAG behavior is claimed.
 
-- What was the question?  
-- What did the system do?  
-- What should have happened instead?
-
-> _Failure case 1 here._
-
-> _Failure case 2 here._
-
-**When should DocuBot say “I do not know based on the docs I have”?**  
-Give at least two specific situations.
-
-> _Your answer here._
-
-**What guardrails did you implement?**  
-Examples: refusal rules, thresholds, limits on snippets, safe defaults.
-
-> _Your answer here._
-
----
+Refuse when no relevant passages exist (payments, geography) or when retrieved
+passages do not support the requested fact (database encryption-key rotation).
+Only the first condition is enforced deterministically; the second relies on
+Gemini following the prompt. Empty/stopword-only queries and empty/missing corpora
+also refuse. Positive `top_k`, bounded result count, readable thresholds, and
+source labels make behavior easier to inspect.
 
 ## 6. Limitations and Future Improvements
 
-**Current limitations**  
-List at least three limitations of your DocuBot system.
+1. Keyword matching misses paraphrases and can overvalue misleading shared terms.
+2. A matching file or section does not prove answer support; refusal can be wrong
+   in either direction.
+3. Stale/conflicting docs remain stale/conflicting after retrieval.
+4. No live generated-answer evaluation has been completed in this environment.
+5. Snippets may contain sensitive data; RAG sends selected text to the provider.
 
-1. _Limitation 1_
-2. _Limitation 2_
-3. _Limitation 3_
-
-**Future improvements**  
-List two or three changes that would most improve reliability or usefulness.
-
-1. _Improvement 1_
-2. _Improvement 2_
-3. _Improvement 3_
-
----
+Improvements: evaluate hybrid/semantic search plus reranking; tune chunk sizes
+and thresholds on a separate labeled set; check citations and claim support on
+live answers, including adversarial and conflicting-document cases.
 
 ## 7. Responsible Use
 
-**Where could this system cause real world harm if used carelessly?**  
-Think about wrong answers, missing information, or over trusting the LLM.
+Incorrect authentication advice could weaken security, and incorrect database
+instructions could cause data loss. A filename citation is only useful if the
+cited passage supports the claim.
 
-> _Your answer here._
+- Verify answers against the actual source and running code before acting.
+- Preserve access restrictions such as the admin-only users endpoint.
+- Avoid sending private credentials or unauthorized documents to the provider.
+- Treat refusal, unsupported answers, and contradictory docs as reasons to inspect
+  the evidence rather than repeatedly prompting for a confident response.
 
-**What instructions would you give real developers who want to use DocuBot safely?**  
-Write 2 to 4 short bullet points.
+## Validation and assistance
 
-- _Guideline 1_
-- _Guideline 2_
-- _Guideline 3 (optional)_
-
----
+Implementation and documentation were prepared with Codex assistance. Twelve
+unit/integration tests pass, covering seven supported questions, refusal behavior,
+chunk context, CLI-independent retrieval, missing corpora, top-k, and LLM prompt
+boundaries. A CLI smoke test also passed with no API key. No claim is made that
+Alex personally attended the session, observed live Gemini outputs, or authored
+this implementation without assistance.
