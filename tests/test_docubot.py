@@ -21,6 +21,7 @@ class RetrievalTests(unittest.TestCase):
             ("What environment variables are required for authentication?", "AUTH.md", "TOKEN_LIFETIME_SECONDS"),
             ("How do I connect to the database?", "DATABASE.md", "DATABASE_URL"),
             ("Which endpoint lists all users?", "API_REFERENCE.md", "Only accessible to admins"),
+            ("Which endpoint returns all users?", "API_REFERENCE.md", "Only accessible to admins"),
             ("What does the /api/projects/<project_id> route return?", "API_REFERENCE.md", '"description"'),
             ("How does a client refresh an access token?", "API_REFERENCE.md", "POST /api/refresh"),
             ("Which fields are stored in the users table?", "DATABASE.md", "password_hash"),
@@ -81,6 +82,53 @@ class RetrievalTests(unittest.TestCase):
             bot = DocuBot(directory)
             self.assertEqual(len(bot.documents), 1)
             self.assertEqual(bot.retrieve("DATABASE connection!!!"), [("notes.txt", "Database connection.")])
+
+    def test_introduction_only_evidence_is_not_lost(self):
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "guide.md").write_text(
+                "# Guide\n\nThe release codename is Bluebird.\n\n"
+                "## Deployment\n\nRun deploy.py for deployment.\n")
+            bot = DocuBot(directory)
+            snippets = bot.retrieve("What is the release codename?")
+            self.assertTrue(any("Bluebird" in text for _, text in snippets))
+
+    def test_cutoff_checks_coverage_before_heading_bonus(self):
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "guide.txt").write_text("alpha beta")
+            bot = DocuBot(directory)
+            self.assertTrue(bot.retrieve("alpha beta gamma delta epsilon"))
+            self.assertEqual(bot.retrieve("alpha beta gamma delta epsilon zeta"), [])
+
+    def test_duplicate_words_cannot_inflate_score(self):
+        self.assertEqual(self.bot.score_document("token token token", "token"), 1.0)
+        self.assertEqual(self.bot.score_document("token database", "token"), 0.5)
+
+
+class OfflineWorkflowTests(unittest.TestCase):
+    def test_cli_works_without_key_and_preserves_evidence(self):
+        import os
+        import subprocess
+        import sys
+        environment = dict(os.environ, GEMINI_API_KEY="", PYTHON_DOTENV_DISABLED="1")
+        process = subprocess.run(
+            [sys.executable, "main.py"], cwd=ROOT,
+            input="2\nWhich endpoint returns all users?\nq\n",
+            capture_output=True, text=True, check=True, env=environment,
+        )
+        self.assertIn("Only accessible to admins", process.stdout)
+        self.assertIn("Goodbye.", process.stdout)
+
+    def test_offline_comparison_does_not_claim_generated_answers(self):
+        from compare_modes import compare
+        output = compare(live=False)
+        self.assertFalse(output["live_gemini"])
+        self.assertEqual(len(output["results"]), 11)
+        for row in output["results"]:
+            self.assertTrue(row["naive"].startswith("NOT RUN:"))
+            if row["sources"]:
+                self.assertTrue(row["rag"].startswith("NOT RUN:"))
+            else:
+                self.assertIn("I do not know", row["rag"])
 
 
 class PromptTests(unittest.TestCase):

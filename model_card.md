@@ -19,7 +19,7 @@ answer, or an explicit refusal. API errors are operational failures, not answers
 - Build an inverted index from normalized words to filenames.
 - Split Markdown at headings, retaining parent headings with each section. This
   keeps endpoint restrictions, examples, and table rows with their context.
-  Skip broad root introductions when detailed subsections exist. Plain text
+  Retain root introductions but halve their ranking when detailed subsections exist. Plain text
   uses blank-line chunks.
 - Score each section by the fraction of distinct meaningful query terms matched.
   Require at least 0.4 coverage, then rank with a small heading-match bonus
@@ -142,9 +142,15 @@ cited passage supports the claim.
 
 ## Validation and assistance
 
-Implementation and documentation were prepared with Codex assistance. Twelve
+Implementation and documentation were prepared with Codex assistance. Seventeen
 unit/integration tests pass, covering seven supported questions, refusal behavior,
 chunk context, CLI-independent retrieval, missing corpora, top-k, and LLM prompt
 boundaries. A CLI smoke test also passed with no API key. No claim is made that
 Alex personally attended the session, observed live Gemini outputs, or authored
 this implementation without assistance.
+
+## Requirement audit and CI
+
+See `TINKER_CHECKLIST.md` for every website section and checkpoint, including
+the explicit no-key exception. GitHub Actions runs the offline tests, CLI smoke
+test, starter evaluation, and comparison on Python 3.11 and 3.12.

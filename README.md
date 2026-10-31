@@ -102,3 +102,13 @@ configured. An answer containing an API-error message is not a successful test.
 
 Read `WALKTHROUGH.md` for a presentation guide. The documents describe a fictional
 backend; you do not need to set up its database or authentication server.
+
+## Tinker requirement audit and CI
+
+`TINKER_CHECKLIST.md` maps every website section and checkpoint to the code,
+observed results, or the explicit no-key limitation. `WALKTHROUGH.md` includes the
+course vocabulary and a guide for explaining the implementation.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the offline checks on Python
+3.11 and 3.12 after pushes and pull requests. It needs no API key and does not
+make live Gemini requests.

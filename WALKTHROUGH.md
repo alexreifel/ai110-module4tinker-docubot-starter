@@ -61,3 +61,16 @@ Use those real outputs to finish the model card. Compare the exact same question
 in all modes. Explain an unsupported naive response, a useful raw snippet, a
 clear grounded RAG answer, and a real RAG failure. Those live observations have
 not yet been collected. The offline artifact labels them as not run.
+
+## Key terms from the website
+
+- **Knowledge base:** the files in `docs/` that the assistant can search.
+- **Chunking:** splitting those files into retrievable sections.
+- **Retrieval:** finding and ranking sections against a question.
+- **Grounding:** requiring an answer to be supported by retrieved evidence.
+- **Hallucination:** an unsupported or invented claim in generated output.
+- **Guardrail:** an explicit rule constraining behavior, such as refusing when
+  retrieval finds no sufficiently relevant passages.
+- **RAG:** retrieval followed by generation using retrieved context.
+
+The four checkpoint answers and validation evidence are in `TINKER_CHECKLIST.md`.

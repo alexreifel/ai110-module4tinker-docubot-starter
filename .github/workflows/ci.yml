@@ -1,0 +1,39 @@
+name: DocuBot checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Check source formatting and syntax
+        run: |
+          git show --format= --check HEAD
+          python -m compileall -q docubot.py llm_client.py main.py compare_modes.py tests
+      - name: Run tests including offline CLI smoke test
+        env:
+          GEMINI_API_KEY: ''
+          PYTHON_DOTENV_DISABLED: '1'
+        run: python -m unittest discover -s tests -v
+      - name: Run starter retrieval evaluation
+        run: python evaluation.py
+      - name: Exercise offline comparison
+        run: python compare_modes.py --output /tmp/docubot-offline-comparison.json

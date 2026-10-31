@@ -79,6 +79,7 @@ class DocuBot:
         """
         index = {}
         self.chunks = []
+        self.intro_chunks = set()
         for filename, text in documents:
             for token in self.tokenize(text):
                 index.setdefault(token, []).append(filename)
@@ -86,11 +87,15 @@ class DocuBot:
                 headings, body, sections = [], [], []
 
                 def save_section():
-                    # Skip a document's broad introduction when it has detailed
-                    # subsections; headings alone do not answer a question.
-                    if body and len(headings) > 1:
-                        sections.append("\n".join(h for _, h in headings)
-                                        + "\n\n" + "\n".join(body).strip())
+                    # Preserve introductory evidence, but lower its rank when
+                    # more specific subsections exist. Never silently drop text.
+                    body_text = "\n".join(body).strip()
+                    if body_text:
+                        section = ("\n".join(h for _, h in headings)
+                                   + "\n\n" + body_text).strip()
+                        sections.append(section)
+                        if len(headings) <= 1:
+                            self.intro_chunks.add((filename, section))
 
                 for line in text.splitlines():
                     match = re.match(r"^(#{1,6}) ", line)
@@ -103,7 +108,10 @@ class DocuBot:
                     else:
                         body.append(line)
                 save_section()
-                if not sections:  # A single-heading document still has content.
+                if len(sections) == 1:
+                    # A standalone section should not be penalized as an intro.
+                    self.intro_chunks.discard((filename, sections[0]))
+                if not sections:
                     sections = [text]
             else:
                 sections = re.split(r"\n\s*\n", text)
@@ -144,6 +152,8 @@ class DocuBot:
                     heading = "\n".join(line for line in text.splitlines()
                                         if line.startswith("#"))
                     rank = score + 0.25 * self.score_document(query, heading)
+                    if (filename, text) in self.intro_chunks:
+                        rank *= 0.5
                     scored.append((rank, filename, text))
         scored.sort(key=lambda item: item[0], reverse=True)
         return [(filename, text) for _, filename, text in scored[:top_k]]
